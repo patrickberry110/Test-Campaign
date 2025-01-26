@@ -18,9 +18,44 @@ def install_package(package):
 # Ensure openpyxl is installed for Excel file handling
 install_package("openpyxl")
 
-# Initialize Streamlit App
-st.title("Automated Email Outreach Campaign")
-st.write("Manage your email outreach campaigns easily.")
+# Set page config to reflect brand
+st.set_page_config(
+    page_title="EdgePoint Campaign Manager",
+    page_icon="💼",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# Custom styles
+st.markdown("""
+    <style>
+    body {
+        font-family: 'Open Sans', sans-serif;
+        background-color: #f9f9f9;
+    }
+    .css-18e3th9 {
+        background-color: #f5f5f5; /* Sidebar background */
+    }
+    h1, h2, h3 {
+        color: #003366; /* Primary Blue */
+    }
+    .stButton>button {
+        background-color: #FFC72C; /* Gold */
+        color: #003366;
+        border-radius: 12px;
+        padding: 8px 16px;
+    }
+    .stButton>button:hover {
+        background-color: #ffdf80; /* Lighter Gold */
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Add Logo and Branding
+st.image("https://www.edgepointcm.com/wp-content/uploads/2020/09/logo-blue.png", width=200)
+
+st.title("EdgePoint Automated Campaign Manager")
+st.write("Experience. Empathy. Results. Automate your email campaigns with ease.")
 
 # Step 1: Upload Contact List
 st.header("1. Upload Contact List")
@@ -39,7 +74,7 @@ if uploaded_file:
         st.write("Preview of your contact list:")
         st.dataframe(contacts.head())
 
-        # Ensure email and name columns are case-insensitive
+        # Ensure email column is case-insensitive
         email_column = None
         name_column = None
         for column in contacts.columns:
@@ -60,8 +95,14 @@ if uploaded_file:
     except Exception as e:
         st.error(f"An error occurred while processing the file: {e}")
 
-# Step 2: Enter Mailgun API Details
-st.header("2. Enter Mailgun API Details")
+# Step 2: Upload Campaign Materials
+st.header("2. Upload Relevant Campaign Materials")
+campaign_material = st.file_uploader("Upload Campaign Materials Here:", type=["pdf"])
+if campaign_material:
+    st.success("Campaign PDF uploaded successfully.")
+
+# Step 3: Enter Mailgun API Details
+st.header("3. Enter Mailgun API Details")
 mailgun_domain = st.text_input("Mailgun Domain", "Your Mailgun domain here")
 mailgun_api_key = st.text_input("Mailgun API Key", type="password")
 
@@ -92,15 +133,15 @@ if st.button("Verify Mailgun Credentials"):
         except Exception as e:
             st.error(f"Error verifying credentials: {str(e)}")
 
-# Step 3: Create Email Template
-st.header("3. Create Email Template")
+# Step 4: Create Email Template
+st.header("4. Create Email Template")
 subject = st.text_input("Email Subject:", "Your Subject Here")
 email_body = st.text_area("Email Body:", "Hi {name},\n\nThis is a personalized email template.")
 
 st.write("You can use placeholders like `{name}`, `{company}` for personalization.")
 
-# Step 4: Schedule Email Campaign
-st.header("4. Schedule Email Campaign")
+# Step 5: Schedule Email Campaign
+st.header("5. Schedule Email Campaign")
 schedule_time = st.time_input("Select the time to send the campaign:", value=(datetime.now() + timedelta(minutes=5)).time())
 schedule_date = st.date_input("Select the date to send the campaign:", value=datetime.now().date())
 
@@ -112,6 +153,8 @@ if st.button("Schedule Campaign"):
         st.error("Please upload a contact list before scheduling.")
     elif not mailgun_domain or not mailgun_api_key:
         st.error("Please provide Mailgun API details before scheduling.")
+    elif not campaign_material:
+        st.error("Please upload the Campaign PDF before scheduling.")
     else:
         st.success(f"Campaign scheduled for {schedule_datetime}.")
 
@@ -131,6 +174,7 @@ if st.button("Schedule Campaign"):
                     response = requests.post(
                         f"https://api.mailgun.net/v3/{mailgun_domain}/messages",
                         auth=("api", mailgun_api_key),
+                        files={"attachment": campaign_material.getvalue()},
                         data={
                             "from": f"Your Name <mailgun@{mailgun_domain}>",
                             "to": recipient_email,
