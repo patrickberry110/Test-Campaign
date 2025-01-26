@@ -36,6 +36,9 @@ if uploaded_file:
             st.error("Unsupported file type! Please upload a .csv or .xlsx file.")
             st.stop()
 
+        # Normalize column names to lowercase
+        contacts.columns = contacts.columns.str.lower()
+        
         st.write("Preview of your contact list:")
         st.dataframe(contacts.head())
 
