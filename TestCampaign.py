@@ -18,48 +18,59 @@ def install_package(package):
 # Ensure openpyxl is installed for Excel file handling
 install_package("openpyxl")
 
-# Set page config to reflect brand
+# Enforce custom branding
 st.set_page_config(
-    page_title="EdgePoint Campaign Manager - Business Services Practice",
+    page_title="EdgePoint Campaign Manager",
     page_icon="💼",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# Custom styles
+# Inject custom CSS for branding
 st.markdown("""
     <style>
+    /* Body styling */
     body {
         font-family: 'Open Sans', sans-serif;
-        background-color: #FFFFFF; /* White background */
+        background-color: #ffffff; /* White background */
+        color: #003366; /* EdgePoint Blue for text */
     }
-    .css-18e3th9 {
-        background-color: #f5f5f5; /* Sidebar background */
+    /* Header and Titles */
+    h1, h2, h3, h4, h5, h6 {
+        color: #003366; /* EdgePoint Blue */
     }
-    h1, h2, h3 {
-        color: #003366; /* Primary Blue */
-    }
+    /* Buttons */
     .stButton>button {
-        background-color: #FFC72C; /* Gold */
-        color: #003366;
+        background-color: #FFC72C; /* Gold buttons */
+        color: #003366; /* EdgePoint Blue text */
         border-radius: 12px;
+        border: none;
         padding: 8px 16px;
+        font-weight: bold;
     }
     .stButton>button:hover {
-        background-color: #ffdf80; /* Lighter Gold */
+        background-color: #ffdf80; /* Lighter gold for hover effect */
+        color: #003366;
     }
+    /* Sidebar styling */
+    .css-18e3th9 {
+        background-color: #E6EFF5; /* Light blue background for sidebar */
+    }
+    /* File uploader */
     .stFileUploader {
-        border: 1px solid #003366; /* Blue border for file uploader */
         border-radius: 8px;
+        border: 1px solid #cccccc; /* Light gray border */
+        padding: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Add Logo and Branding
-st.image("https://edgepoint.com/wp-content/uploads/2021/12/EdgePoint_logo-web-primary.png", width=200)
+# Add EdgePoint logo
+st.image("https://www.edgepointcm.com/wp-content/uploads/2020/09/logo-blue.png", width=200)
 
+# Application title
 st.title("EdgePoint Automated Campaign Manager")
-st.write("Experience. Empathy. Results.")
+st.write("Experience. Empathy. Results. Automate your email campaigns with ease.")
 
 # Step 1: Upload Contact List
 st.header("1. Upload Contact List")
@@ -100,12 +111,11 @@ if uploaded_file:
         st.error(f"An error occurred while processing the file: {e}")
 
 # Step 2: Upload Campaign Materials
-st.header("2. Upload Relevant Campaign Materials")
-campaign_materials = st.file_uploader("Upload Campaign Materials Here:", type=["pdf"])
+st.header("2. Upload Campaign Materials")
+uploaded_pdf = st.file_uploader("Upload Campaign Materials Here:", type=["pdf"])
 
-if campaign_materials:
-    st.write("Uploaded Campaign Materials:")
-    st.write(campaign_materials.name)
+if uploaded_pdf:
+    st.write("Campaign Materials uploaded successfully!")
 
 # Step 3: Enter Mailgun API Details
 st.header("3. Enter Mailgun API Details")
@@ -159,8 +169,6 @@ if st.button("Schedule Campaign"):
         st.error("Please upload a contact list before scheduling.")
     elif not mailgun_domain or not mailgun_api_key:
         st.error("Please provide Mailgun API details before scheduling.")
-    elif not campaign_materials:
-        st.error("Please upload campaign materials before scheduling.")
     else:
         st.success(f"Campaign scheduled for {schedule_datetime}.")
 
@@ -176,11 +184,10 @@ if st.button("Schedule Campaign"):
                         if f"{{{column}}}" in personalized_body:
                             personalized_body = personalized_body.replace(f"{{{column}}}", str(contact[column]))
 
-                    # Send email via Mailgun with attachment
+                    # Send email via Mailgun
                     response = requests.post(
                         f"https://api.mailgun.net/v3/{mailgun_domain}/messages",
                         auth=("api", mailgun_api_key),
-                        files={"attachment": (campaign_materials.name, campaign_materials.getvalue())},
                         data={
                             "from": f"Your Name <mailgun@{mailgun_domain}>",
                             "to": recipient_email,
