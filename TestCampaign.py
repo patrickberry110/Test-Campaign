@@ -18,20 +18,6 @@ def install_package(package):
 # Ensure openpyxl is installed for Excel file handling
 install_package("openpyxl")
 
-# Define a function to send an email using Mailgun
-def send_simple_message(api_key, domain, from_email, to_email, subject, text_body):
-    response = requests.post(
-        f"https://api.mailgun.net/v3/{domain}/messages",
-        auth=("api", api_key),
-        data={
-            "from": from_email,
-            "to": to_email,
-            "subject": subject,
-            "text": text_body
-        }
-    )
-    return response
-
 # Initialize Streamlit App
 st.title("Automated Email Outreach Campaign")
 st.write("Manage your email outreach campaigns easily.")
@@ -50,9 +36,6 @@ if uploaded_file:
             st.error("Unsupported file type! Please upload a .csv or .xlsx file.")
             st.stop()
 
-        # Normalize column names to lowercase
-        contacts.columns = contacts.columns.str.lower()
-        
         st.write("Preview of your contact list:")
         st.dataframe(contacts.head())
 
@@ -70,14 +53,22 @@ mailgun_api_key = st.text_input("Mailgun API Key", type="password")
 
 if st.button("Verify Mailgun Credentials"):
     try:
-        test_response = requests.get(
-            f"https://api.mailgun.net/v3/{mailgun_domain}/stats",
-            auth=("api", mailgun_api_key)
+        # Send a test email to verify credentials
+        test_email = "your_verified_email@example.com"  # Replace with a verified recipient email
+        test_response = requests.post(
+            f"https://api.mailgun.net/v3/{mailgun_domain}/messages",
+            auth=("api", mailgun_api_key),
+            data={
+                "from": f"Test User <mailgun@{mailgun_domain}>",
+                "to": test_email,
+                "subject": "Test Email",
+                "text": "This is a test email to verify Mailgun credentials."
+            }
         )
         if test_response.status_code == 200:
-            st.success("Mailgun credentials verified successfully!")
+            st.success("Mailgun credentials verified successfully! Test email sent.")
         else:
-            st.error("Failed to verify credentials. Please check your domain and API key.")
+            st.error(f"Failed to verify credentials. API response: {test_response.text}")
     except Exception as e:
         st.error(f"Error verifying credentials: {str(e)}")
 
