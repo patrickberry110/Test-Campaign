@@ -39,9 +39,23 @@ if uploaded_file:
         st.write("Preview of your contact list:")
         st.dataframe(contacts.head())
 
-        if 'email' not in contacts.columns:
-            st.error("The file must include an 'email' column!")
+        # Ensure email and name columns are case-insensitive
+        email_column = None
+        name_column = None
+        for column in contacts.columns:
+            if column.strip().lower() == "email":
+                email_column = column
+            if column.strip().lower() == "name":
+                name_column = column
+
+        if email_column is None:
+            st.error("The file must include an 'email' column (case-insensitive)!")
             st.stop()
+        else:
+            contacts.rename(columns={email_column: "email"}, inplace=True)
+
+        if name_column is not None:
+            contacts.rename(columns={name_column: "name"}, inplace=True)
 
     except Exception as e:
         st.error(f"An error occurred while processing the file: {e}")
@@ -51,26 +65,32 @@ st.header("2. Enter Mailgun API Details")
 mailgun_domain = st.text_input("Mailgun Domain", "Your Mailgun domain here")
 mailgun_api_key = st.text_input("Mailgun API Key", type="password")
 
+def send_test_email():
+    test_email = "your_verified_email@example.com"  # Replace with your verified email
+    response = requests.post(
+        f"https://api.mailgun.net/v3/{mailgun_domain}/messages",
+        auth=("api", mailgun_api_key),
+        data={
+            "from": f"Test User <mailgun@{mailgun_domain}>",
+            "to": test_email,
+            "subject": "Mailgun Test Email",
+            "text": "This is a test email to verify Mailgun credentials."
+        }
+    )
+    return response
+
 if st.button("Verify Mailgun Credentials"):
-    try:
-        # Send a test email to verify credentials
-        test_email = "your_verified_email@example.com"  # Replace with a verified recipient email
-        test_response = requests.post(
-            f"https://api.mailgun.net/v3/{mailgun_domain}/messages",
-            auth=("api", mailgun_api_key),
-            data={
-                "from": f"Test User <mailgun@{mailgun_domain}>",
-                "to": test_email,
-                "subject": "Test Email",
-                "text": "This is a test email to verify Mailgun credentials."
-            }
-        )
-        if test_response.status_code == 200:
-            st.success("Mailgun credentials verified successfully! Test email sent.")
-        else:
-            st.error(f"Failed to verify credentials. API response: {test_response.text}")
-    except Exception as e:
-        st.error(f"Error verifying credentials: {str(e)}")
+    if not mailgun_domain or not mailgun_api_key:
+        st.error("Please provide both the Mailgun domain and API key.")
+    else:
+        try:
+            response = send_test_email()
+            if response.status_code == 200:
+                st.success("Mailgun credentials verified successfully! Test email sent.")
+            else:
+                st.error(f"Failed to verify credentials: {response.json().get('message', response.text)}")
+        except Exception as e:
+            st.error(f"Error verifying credentials: {str(e)}")
 
 # Step 3: Create Email Template
 st.header("3. Create Email Template")
