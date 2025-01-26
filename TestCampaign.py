@@ -18,6 +18,20 @@ def install_package(package):
 # Ensure openpyxl is installed for Excel file handling
 install_package("openpyxl")
 
+# Define a function to send an email using Mailgun
+def send_simple_message(api_key, domain, from_email, to_email, subject, text_body):
+    response = requests.post(
+        f"https://api.mailgun.net/v3/{domain}/messages",
+        auth=("api", api_key),
+        data={
+            "from": from_email,
+            "to": to_email,
+            "subject": subject,
+            "text": text_body
+        }
+    )
+    return response
+
 # Initialize Streamlit App
 st.title("Automated Email Outreach Campaign")
 st.write("Manage your email outreach campaigns easily.")
