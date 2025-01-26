@@ -20,7 +20,7 @@ install_package("openpyxl")
 
 # Set page config to reflect brand
 st.set_page_config(
-    page_title="EdgePoint Campaign Manager",
+    page_title="EdgePoint Campaign Manager - Business Services Practice",
     page_icon="💼",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -31,7 +31,7 @@ st.markdown("""
     <style>
     body {
         font-family: 'Open Sans', sans-serif;
-        background-color: #f9f9f9;
+        background-color: #FFFFFF; /* White background */
     }
     .css-18e3th9 {
         background-color: #f5f5f5; /* Sidebar background */
@@ -48,14 +48,18 @@ st.markdown("""
     .stButton>button:hover {
         background-color: #ffdf80; /* Lighter Gold */
     }
+    .stFileUploader {
+        border: 1px solid #003366; /* Blue border for file uploader */
+        border-radius: 8px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # Add Logo and Branding
-st.image("https://www.edgepointcm.com/wp-content/uploads/2020/09/logo-blue.png", width=200)
+st.image("https://edgepoint.com/wp-content/uploads/2021/12/EdgePoint_logo-web-primary.png", width=200)
 
 st.title("EdgePoint Automated Campaign Manager")
-st.write("Experience. Empathy. Results. Automate your email campaigns with ease.")
+st.write("Experience. Empathy. Results.")
 
 # Step 1: Upload Contact List
 st.header("1. Upload Contact List")
@@ -97,9 +101,11 @@ if uploaded_file:
 
 # Step 2: Upload Campaign Materials
 st.header("2. Upload Relevant Campaign Materials")
-campaign_material = st.file_uploader("Upload Campaign Materials Here:", type=["pdf"])
-if campaign_material:
-    st.success("Campaign PDF uploaded successfully.")
+campaign_materials = st.file_uploader("Upload Campaign Materials Here:", type=["pdf"])
+
+if campaign_materials:
+    st.write("Uploaded Campaign Materials:")
+    st.write(campaign_materials.name)
 
 # Step 3: Enter Mailgun API Details
 st.header("3. Enter Mailgun API Details")
@@ -153,8 +159,8 @@ if st.button("Schedule Campaign"):
         st.error("Please upload a contact list before scheduling.")
     elif not mailgun_domain or not mailgun_api_key:
         st.error("Please provide Mailgun API details before scheduling.")
-    elif not campaign_material:
-        st.error("Please upload the Campaign PDF before scheduling.")
+    elif not campaign_materials:
+        st.error("Please upload campaign materials before scheduling.")
     else:
         st.success(f"Campaign scheduled for {schedule_datetime}.")
 
@@ -170,11 +176,11 @@ if st.button("Schedule Campaign"):
                         if f"{{{column}}}" in personalized_body:
                             personalized_body = personalized_body.replace(f"{{{column}}}", str(contact[column]))
 
-                    # Send email via Mailgun
+                    # Send email via Mailgun with attachment
                     response = requests.post(
                         f"https://api.mailgun.net/v3/{mailgun_domain}/messages",
                         auth=("api", mailgun_api_key),
-                        files={"attachment": campaign_material.getvalue()},
+                        files={"attachment": (campaign_materials.name, campaign_materials.getvalue())},
                         data={
                             "from": f"Your Name <mailgun@{mailgun_domain}>",
                             "to": recipient_email,
